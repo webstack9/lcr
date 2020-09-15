@@ -14,17 +14,6 @@ RUN composer install  \
 COPY . /app/
 RUN composer dump-autoload --optimize --classmap-authoritative
 
-# Build frontend assets
-FROM node as frontend
-RUN mkdir -p /app/public
-WORKDIR /app
-
-COPY package.json package-lock.json webpack.mix.js /app/
-RUN npm install
-
-COPY resources/assets /app/resources/assets
-RUN npm run production
-
 # Build app image
 FROM php:apache as app
 LABEL maintainer="Joel Shepherd <https://github.com/joelshepherd>"
@@ -52,7 +41,7 @@ ADD .docker/build/php.ini ${PHP_INI_DIR}/conf.d/99-overrides.ini
 WORKDIR /app
 COPY .env.cloudrun /var/www/.env
 COPY --from=backend /app /app
-COPY --from=frontend /app/public/js /app/public/js
-COPY --from=frontend /app/public/css /app/public/css
-COPY --from=frontend /app/mix-manifest.json /var/www/html/mix-manifest.json
+COPY app/public/js /app/public/js
+COPY app/public/css /app/public/css
+COPY app/mix-manifest.json /var/www/html/mix-manifest.json
 RUN chgrp -R www-data /app/storage /app/bootstrap/cache && chmod -R ug+rwx /app/storage /app/bootstrap/cache
