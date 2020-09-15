@@ -1,9 +1,7 @@
-# Build backend source
-FROM composer as backend
+FROM composer:1.9.0 as build
 WORKDIR /app
-
-COPY composer.json composer.lock /app/
-RUN composer install  \
+COPY . /app
+RUN composer global require hirak/prestissimo && composer install  \
     --ignore-platform-reqs \
     --no-ansi \
     --no-autoloader \
@@ -11,37 +9,20 @@ RUN composer install  \
     --no-interaction \
     --no-scripts
 
-COPY . /app/
-RUN composer dump-autoload --optimize --classmap-authoritative
-
-# Build app image
-FROM php:apache as app
-LABEL maintainer="Joel Shepherd <https://github.com/joelshepherd>"
-
-# RUN apt-get update && \
-#     apt-get install -y --no-install-recommends \
-#         # packages here
-#     && rm -r /var/lib/apt/lists/*
-
-RUN docker-php-ext-install \
-    mbstring \
-    opcache \
-    pdo_mysql
+FROM php:7.3-apache-stretch
+RUN docker-php-ext-install pdo pdo_mysql
 RUN pecl install -o -f redis \
     && rm -rf /tmp/pear \
     && docker-php-ext-enable redis
 
 EXPOSE 8080
-
-RUN a2enmod rewrite
-
-ADD .docker/build/apache.conf /etc/apache2/sites-available/000-default.conf
-ADD .docker/build/php.ini ${PHP_INI_DIR}/conf.d/99-overrides.ini
-
-WORKDIR /app
-COPY .env.cloudrun /var/www/.env
-COPY --from=backend /app /app
+COPY --from=build /app /var/www/
+COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY .env.example /var/www/.env
 COPY app/public/js /app/public/js
 COPY app/public/css /app/public/css
 COPY app/mix-manifest.json /var/www/html/mix-manifest.json
-RUN chgrp -R www-data /app/storage /app/bootstrap/cache && chmod -R ug+rwx /app/storage /app/bootstrap/cache
+RUN chmod 777 -R /var/www/storage/ && \
+    echo "Listen 8080" >> /etc/apache2/ports.conf && \
+    chown -R www-data:www-data /var/www/ && \
+    a2enmod rewrite
