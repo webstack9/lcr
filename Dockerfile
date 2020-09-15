@@ -16,6 +16,7 @@ RUN composer dump-autoload --optimize --classmap-authoritative
 
 # Build frontend assets
 FROM node as frontend
+RUN mkdir -p /app/public
 WORKDIR /app
 
 COPY package.json package-lock.json webpack.mix.js /app/
