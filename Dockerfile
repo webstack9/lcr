@@ -18,10 +18,11 @@ RUN pecl install -o -f redis \
 EXPOSE 8080
 COPY --from=build /app /var/www/
 COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
-COPY .env.example /var/www/.env
-COPY app/public/js /app/public/js
-COPY app/public/css /app/public/css
-COPY app/mix-manifest.json /var/www/html/mix-manifest.json
+COPY docker/build/php.ini ${PHP_INI_DIR}/conf.d/99-overrides.ini
+COPY .env.cloudrun /var/www/.env
+COPY public/js /var/www/public/js
+COPY public/css /var/www/public/css
+COPY public/mix-manifest.json /var/www/public/mix-manifest.json
 RUN chmod 777 -R /var/www/storage/ && \
     echo "Listen 8080" >> /etc/apache2/ports.conf && \
     chown -R www-data:www-data /var/www/ && \
