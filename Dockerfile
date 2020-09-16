@@ -2,7 +2,7 @@ FROM composer AS composer
 
 # copying the source directory and install the dependencies with composer
 COPY . /app
-
+COPY .env.cloudrun /app/.env
 # run composer install to install the dependencies
 RUN composer install --no-dev --optimize-autoloader
 
@@ -29,7 +29,7 @@ RUN mkdir -p /run/nginx && chown -R nginx:nginx /run/nginx && chown -R nginx:ngi
 
 #COPY --chown=nobody . /var/www/html/
 COPY --chown=nginx --from=composer /app /usr/share/nginx/html
-#RUN chown -R nginx.nginx /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 777 /usr/share/nginx/html/storage /usr/share/nginx/html/bootstrap/cache
 
 # Expose the port nginx is reachable on
 #EXPOSE 8080
