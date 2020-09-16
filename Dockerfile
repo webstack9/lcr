@@ -32,4 +32,4 @@ COPY --chown=nginx --from=composer /app /usr/share/nginx/html
 #RUN chown -R nginx.nginx /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Expose the port nginx is reachable on
-EXPOSE 8080
+#EXPOSE 8080
