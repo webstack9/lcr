@@ -66,8 +66,8 @@ return [
         'cloudsql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
-            'host' => getenv("CLOUD_SQL_CONNECTION_NAME"),
-            'port' => getenv('DB_SOCKET_DIR') ?: '/cloudsql',
+            'host' => '34.76.211.217',
+            'port' => 3306,
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
