@@ -66,7 +66,7 @@ return [
         'cloudsql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
-            'host' => '34.76.211.217',
+            'host' => 'dev-fiber-271510:europe-west1:mysql',
             'port' => 3306,
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
