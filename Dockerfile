@@ -7,6 +7,7 @@ COPY .env.cloudrun /app/.env
 RUN composer install --no-dev --optimize-autoloader
 
 FROM phpearth/php:7.3-nginx
+RUN apk add --no-cache php7.3-pdo php7.3-pdo_mysql
 LABEL Maintainer="Dragan Jovanovic <webstack9@gmail.com>" \
       Description="Lightweight container with Nginx 1.18 & PHP-FPM 7.3 based on Alpine Linux Laravel Multi Stage."
 
