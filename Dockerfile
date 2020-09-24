@@ -1,36 +1,58 @@
-FROM composer AS composer
+FROM php:7.4-apache as prod
 
-# copying the source directory and install the dependencies with composer
-COPY . /app
-COPY .env.cloudrun /app/.env
-# run composer install to install the dependencies
+# Set working directory
+RUN mkdir /cloudsql
+
+ENV COMPOSER_ALLOW_SUPERUSER 1
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+#ENV PORT 8080
+
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+# Use the PORT environment variable in Apache configuration files.
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+
+# Configure PHP for development.
+# Switch to the production php.ini for production operations.
+# RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+# https://hub.docker.com/_/php#configuration
+RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+
+# install all the dependencies and enable PHP modules
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+      procps \
+      nano \
+      git \
+      unzip \
+      libicu-dev \
+      zlib1g-dev \
+      libxml2 \
+      libxml2-dev \
+      libreadline-dev \
+      supervisor \
+      cron \
+      libzip-dev \
+    && docker-php-ext-configure pdo_mysql --with-pdo-mysql=mysqlnd \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install \
+      pdo_mysql \
+      sockets \
+      intl \
+      opcache \
+      zip \
+    && rm -rf /tmp/* \
+    && rm -rf /var/list/apt/* \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Copy all files
+COPY . ./
+COPY ./.env.cloudrun ./.env
+RUN chmod -R 777 storage
 RUN composer install --no-dev --optimize-autoloader
 
-FROM phpearth/php:7.3-nginx
-RUN apk add --no-cache php7.3-pdo php7.3-pdo_mysql
-LABEL Maintainer="Dragan Jovanovic <webstack9@gmail.com>" \
-      Description="Lightweight container with Nginx 1.18 & PHP-FPM 7.3 based on Alpine Linux Laravel Multi Stage."
-
-# Install packages and remove default server definition
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Configure nginx
-COPY docker/config/nginx.conf /etc/nginx/conf.d/default.conf
-
-# Configure PHP-FPM
-COPY docker/config/fpm-pool.conf /etc/php7/php-fpm.d/www.conf
-COPY docker/config/php.ini /etc/php.ini
-
-# Add application
-WORKDIR /usr/share/nginx/html
-
-RUN mkdir -p /run/nginx && chown -R nginx:nginx /run/nginx && chown -R nginx:nginx /usr/share/nginx/html \
-           && mkdir -p /usr/share/nginx/html/var && chmod -R 777 /usr/share/nginx/html/var \
-           && chown -R nginx:nginx /usr/share/nginx/html/var
-
-#COPY --chown=nobody . /var/www/html/
-COPY --chown=nginx --from=composer /app /usr/share/nginx/html
-RUN chmod -R 777 /usr/share/nginx/html/storage /usr/share/nginx/html/bootstrap/cache
-
-# Expose the port nginx is reachable on
-#EXPOSE 8080
+RUN a2enmod rewrite

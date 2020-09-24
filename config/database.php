@@ -42,7 +42,7 @@ return [
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
-        
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
@@ -66,12 +66,12 @@ return [
         'cloudsql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
-            'host' => 'dev-fiber-271510:europe-west1:mysql',
+            'host' => env('DB_HOST', '127.0.0.1'),
             'port' => 3306,
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
+            'unix_socket' => '/cloudsql/cloudrun-test-290214:europe-west1:sqltest;dbname=test1',
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
